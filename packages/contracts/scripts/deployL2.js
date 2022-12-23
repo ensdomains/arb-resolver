@@ -23,10 +23,14 @@ async function main() {
   const ArbitrumResolver = await ethers.getContractFactory("ArbitrumResolver");
   const Storage = await ethers.getContractFactory("Storage");
   const storage = await Storage.deploy();
+  const Foo = await ethers.getContractFactory("Foo");
+  const foo = await Foo.deploy();
+
   const resolver = await ArbitrumResolver.deploy();
   await resolver.deployed();
   console.log(`ArbitrumResolver deployed to ${resolver.address}`);
   console.log(`Storage deployed to ${storage.address}`);
+  console.log(`Foo deployed to ${foo.address}`);
   console.log({l2accounts})
   await (await resolver.functions.setAddr(TEST_NODE, l2accounts[0].address)).wait();
   await (await storage.functions.setInt(2, 4)).wait();
