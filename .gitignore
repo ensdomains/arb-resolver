@@ -1,3 +1,6 @@
-*node_modules*
-*artifacts*
-*cache*
+*node_modules
+packages/contracts/artifacts*
+packages/contracts/cache*
+packages/gateway/build/*
+packages/gateway/secret.yaml
+*dist*
