@@ -1774,10 +1774,10 @@ const fooAddress = '0x6c25aA969CaDCCA2cA6ad022bD67cCe5Fc27024B'
 
 // l1 addresses
 const rollupAddress = '0x7456c45bfd495b7bcf424c0a7993a324035f682f'
-const helperAddress = '0x3A85e361917180567F6a0fb8c68B2b5065126aCA'
+const helperAddress = '0x3f442e7bA284c6Ac57eb95ca6977208443F71795'
 // Uses @eth-optimism/contracts/libraries/trie/Lib_SecureMerkleTrie.sol
 // https://github.com/ethereum-optimism/optimism/blob/develop/packages/contracts/contracts/libraries/trie/Lib_SecureMerkleTrie.sol
-const verifierAddress = '0x04215cE155d30F935648BB4ED3475A9Ae408fB41'
+const verifierAddress = '0xa662897d53ff3cFA9cb44Ed635dB6e152C68C677'
 const rollup = new ethers.Contract(rollupAddress, rollupAbi, l1provider);
 const helper = new ethers.Contract(helperAddress, helperAbi, l1provider);
 const verifier = new ethers.Contract(verifierAddress, verifierAbi, l1provider);
@@ -1854,8 +1854,6 @@ async function main(){
   ]);
   console.log(proof)
   const proofKey = proof.address
-  const secureKey = await verifier.getSecureKey(proof.address)
-  console.log({proofKey, secureKey})
   const accountProof = ethers.utils.RLP.encode(proof.accountProof)
   console.log(7, {
     address:proof.address,

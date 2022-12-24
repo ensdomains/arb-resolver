@@ -62,11 +62,11 @@ contract Verifier {
         bytes memory sendRoot,
         bytes memory encodedBlockArray,
         bytes memory proofKey,
-        bytes memory accountProof,
-        bytes32 stateroot,
+        bytes memory stateTrieWitness,
+        bytes32 stateRoot,
         bytes32 slot,
-        bytes memory storageProof
-    ) public view returns (bytes memory) {
+        bytes memory storageTrieWitness
+    ) public view returns (bytes32) {
         // step 1: check confirmData
         bytes32 confirmdata = keccak256(abi.encodePacked(blockHash, sendRoot));
         Node memory rblock = rollup.getNode(nodeIndex);
@@ -74,21 +74,52 @@ contract Verifier {
         // step 2: check blockHash against encoded block array
         require(blockHash == keccak256(encodedBlockArray), "blockHash encodedBlockArray mismatch");
         // step 3: check storage value from derived value
-        (bool acctExists, bytes memory acctEncoded) = get(
-            abi.encodePacked(proofKey), accountProof, stateroot
-        );
+        return getStorageValue(target, slot, stateRoot, stateTrieWitness, storageTrieWitness);
+    }
 
+    function getStorageValue(
+        address target,
+        bytes32 slot,
+        bytes32 stateRoot,
+        bytes memory stateTrieWitness,
+        bytes memory storageTrieWitness
+    ) internal view returns (bytes32) {
+        (
+            bool exists,
+            bytes memory encodedResolverAccount
+        ) = Lib_SecureMerkleTrie.get(
+                abi.encodePacked(target),
+                stateTrieWitness,
+                stateRoot
+            );
+        require(exists, "Account does not exist");
         Lib_OVMCodec.EVMAccount memory account = Lib_OVMCodec.decodeEVMAccount(
-            acctEncoded
+            encodedResolverAccount
         );
-        (bool storageExists, bytes memory retrievedValue) = get(
+        (bool storageExists, bytes memory retrievedValue) = Lib_SecureMerkleTrie
+            .get(
                 abi.encodePacked(slot),
-                storageProof,
+                storageTrieWitness,
                 account.storageRoot
             );
-        require(storageExists == true, "storage mismatch");
-        return retrievedValue;
+        require(storageExists, "Storage value does not exist");
+        return toBytes32PadLeft(Lib_RLPReader.readBytes(retrievedValue));
     }
+
+    // Ported old function from Lib_BytesUtils.sol
+    function toBytes32PadLeft(bytes memory _bytes)
+        internal
+        pure
+        returns (bytes32)
+    {
+        bytes32 ret;
+        uint256 len = _bytes.length <= 32 ? _bytes.length : 32;
+        assembly {
+            ret := shr(mul(sub(32, len), 8), mload(add(_bytes, 32)))
+        }
+        return ret;
+    }
+
 
     function verifyInclusionProof(
         bytes memory _key,
@@ -97,10 +128,6 @@ contract Verifier {
         bytes32 _root
     ) public pure returns (bool) {
         return Lib_SecureMerkleTrie.verifyInclusionProof(_key, _value, _proof, _root);
-    }
-
-    function getSecureKey(bytes memory _key) public pure returns (bytes memory _secureKey) {
-        return abi.encodePacked(keccak256(_key));
     }
 
     function get(
