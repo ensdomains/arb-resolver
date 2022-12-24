@@ -25,7 +25,7 @@ module.exports = {
     //   url: process.env.L1_PROVIDER_URL || 'http://localhost:9545',
     //   accounts: [process.env.PRIVATE_KEY || '' ],
     //   chainId: 5,
-    //   gatewayurl:'https://arbitrum-resolver-example.uc.r.appspot.com/{sender}/{data}.json',
+    //   gatewayurl:'https://arb-resolver-example.uc.r.appspot.com/{sender}/{data}.json',
     // },
     // optimismGoerli: {
     //   url: process.env.L2_PROVIDER_URL || 'http://localhost:8545',

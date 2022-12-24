@@ -1,9 +1,9 @@
 {
-  "name": "@ensdomains/arbitrum-resolver",
+  "name": "@ensdomains/arb-resolver",
   "version": "0.0.1",
   "description": "Packages for an ENS arbitrum resolver",
   "main": "index.js",
-  "repository": "git@github.com:ensdomains/arbitrum-resolver.git",
+  "repository": "git@github.com:ensdomains/arb-resolver.git",
   "author": "Makoto Inoue <makoto@ens.domains>",
   "license": "MIT",
   "workspaces": [
@@ -13,8 +13,8 @@
   ],
   "private": true,
   "scripts": {
-    "start:gateway": "yarn workspace @ensdomains/arbitrum-resolver-gateway start",
-    "start:client": "yarn workspace @ensdomains/arbitrum-resolver-client start",
+    "start:gateway": "yarn workspace @ensdomains/arb-resolver-gateway start",
+    "start:client": "yarn workspace @ensdomains/arb-resolver-client start",
     "test": "yarn workspaces run test",
     "lint": "yarn workspaces run lint",
     "build": "yarn workspaces run build",
