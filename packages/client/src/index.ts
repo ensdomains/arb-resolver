@@ -1774,10 +1774,10 @@ const fooAddress = '0x6c25aA969CaDCCA2cA6ad022bD67cCe5Fc27024B'
 
 // l1 addresses
 const rollupAddress = '0x7456c45bfd495b7bcf424c0a7993a324035f682f'
-const helperAddress = '0xC4497d6c0f94dc427cE0B8F825c91F25e2845B91'
+const helperAddress = '0x3A85e361917180567F6a0fb8c68B2b5065126aCA'
 // Uses @eth-optimism/contracts/libraries/trie/Lib_SecureMerkleTrie.sol
 // https://github.com/ethereum-optimism/optimism/blob/develop/packages/contracts/contracts/libraries/trie/Lib_SecureMerkleTrie.sol
-const verifierAddress = '0x00F4f4A353bBD7e433709d3388b99E8a6Ff23956'
+const verifierAddress = '0x04215cE155d30F935648BB4ED3475A9Ae408fB41'
 const rollup = new ethers.Contract(rollupAddress, rollupAbi, l1provider);
 const helper = new ethers.Contract(helperAddress, helperAbi, l1provider);
 const verifier = new ethers.Contract(verifierAddress, verifierAbi, l1provider);
@@ -1853,7 +1853,9 @@ async function main(){
     {blockHash}
   ]);
   console.log(proof)
-  const proofKey = ethers.utils.keccak256(proof.address)
+  const proofKey = proof.address
+  const secureKey = await verifier.getSecureKey(proof.address)
+  console.log({proofKey, secureKey})
   const accountProof = ethers.utils.RLP.encode(proof.accountProof)
   console.log(7, {
     address:proof.address,
@@ -1864,11 +1866,12 @@ async function main(){
   const [acctExists, acctEncoded] = await verifier.get(
     proofKey, accountProof, stateroot
   )
+  console.log({acctExists, acctEncoded})
   // decodeEVMAccount
   const storageRoot = ethers.utils.RLP.decode(acctEncoded)[2]
   console.log({acctExists, storageRoot})
 
-  const slotKey = ethers.utils.keccak256(slot)
+  const slotKey = slot
   const storageProof = ethers.utils.RLP.encode((proof.storageProof as any[]).filter((x)=>x.key===slot)[0].proof)
   
   const [storageExists, storageEncoded] = await verifier.get(

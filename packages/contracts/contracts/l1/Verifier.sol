@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import { Lib_MerkleTrie } from "@eth-optimism/contracts/libraries/trie/Lib_SecureMerkleTrie.sol";
+import { Lib_SecureMerkleTrie } from "@eth-optimism/contracts/libraries/trie/Lib_SecureMerkleTrie.sol";
 import { Lib_OVMCodec } from "@eth-optimism/contracts/libraries/codec/Lib_OVMCodec.sol";
 import {Lib_RLPReader} from "@eth-optimism/contracts/libraries/rlp/Lib_RLPReader.sol";
 
@@ -75,7 +75,7 @@ contract Verifier {
         require(blockHash == keccak256(encodedBlockArray), "blockHash encodedBlockArray mismatch");
         // step 3: check storage value from derived value
         (bool acctExists, bytes memory acctEncoded) = get(
-            proofKey, accountProof, stateroot
+            abi.encodePacked(proofKey), accountProof, stateroot
         );
 
         Lib_OVMCodec.EVMAccount memory account = Lib_OVMCodec.decodeEVMAccount(
@@ -96,7 +96,11 @@ contract Verifier {
         bytes memory _proof,
         bytes32 _root
     ) public pure returns (bool) {
-        return Lib_MerkleTrie.verifyInclusionProof(_key, _value, _proof, _root);
+        return Lib_SecureMerkleTrie.verifyInclusionProof(_key, _value, _proof, _root);
+    }
+
+    function getSecureKey(bytes memory _key) public pure returns (bytes memory _secureKey) {
+        return abi.encodePacked(keccak256(_key));
     }
 
     function get(
@@ -104,6 +108,6 @@ contract Verifier {
         bytes memory _proof,
         bytes32 _root
     ) public pure returns (bool, bytes memory) {
-        return Lib_MerkleTrie.get(_key, _proof, _root);
+        return Lib_SecureMerkleTrie.get(_key, _proof, _root);
     }
 }
