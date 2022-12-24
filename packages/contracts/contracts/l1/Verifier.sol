@@ -61,7 +61,6 @@ contract Verifier {
         bytes32 blockHash,
         bytes memory sendRoot,
         bytes memory encodedBlockArray,
-        bytes memory proofKey,
         bytes memory stateTrieWitness,
         bytes32 stateRoot,
         bytes32 slot,

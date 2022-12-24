@@ -1884,7 +1884,6 @@ async function main(){
     blockHash,
     sendRoot,
     encoded_blockarray,
-    proofKey,
     accountProof,
     stateroot,
     slotKey,
