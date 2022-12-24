@@ -5,12 +5,6 @@ import { Lib_SecureMerkleTrie } from "@eth-optimism/contracts/libraries/trie/Lib
 import { Lib_OVMCodec } from "@eth-optimism/contracts/libraries/codec/Lib_OVMCodec.sol";
 import {Lib_RLPReader} from "@eth-optimism/contracts/libraries/rlp/Lib_RLPReader.sol";
 
-struct L2StateProof {
-    bytes32 stateRoot;
-    bytes stateTrieWitness;
-    bytes storageTrieWitness;
-}
-
 struct Node {
     // Hash of the state of the chain as of this node
     bytes32 stateHash;
