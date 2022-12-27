@@ -6,12 +6,14 @@ import {Lib_OVMCodec} from "@eth-optimism/contracts/libraries/codec/Lib_OVMCodec
 import {Lib_SecureMerkleTrie} from "@eth-optimism/contracts/libraries/trie/Lib_SecureMerkleTrie.sol";
 import {Lib_RLPReader} from "@eth-optimism/contracts/libraries/rlp/Lib_RLPReader.sol";
 import {Lib_BytesUtils} from "@eth-optimism/contracts/libraries/utils/Lib_BytesUtils.sol";
-
+import {console} from "hardhat/console.sol";
 struct L2StateProof {
-    bytes32 stateRoot;
-    Lib_OVMCodec.ChainBatchHeader stateRootBatchHeader;
-    Lib_OVMCodec.ChainInclusionProof stateRootProof;
+    uint64 nodeIndex;
+    bytes32 blockHash;
+    bytes sendRoot;
+    bytes encodedBlockArray;
     bytes stateTrieWitness;
+    bytes32 stateRoot;
     bytes storageTrieWitness;
 }
 
@@ -22,8 +24,43 @@ interface IResolverService {
         returns (L2StateProof memory proof);
 }
 
-contract OptimismResolverStub is Lib_AddressResolver {
+struct Node {
+    // Hash of the state of the chain as of this node
+    bytes32 stateHash;
+    // Hash of the data that can be challenged
+    bytes32 challengeHash;
+    // Hash of the data that will be committed if this node is confirmed
+    bytes32 confirmData;
+    // Index of the node previous to this one
+    uint64 prevNum;
+    // Deadline at which this node can be confirmed
+    uint64 deadlineBlock;
+    // Deadline at which a child of this node can be confirmed
+    uint64 noChildConfirmedBeforeBlock;
+    // Number of stakers staked on this node. This includes real stakers and zombies
+    uint64 stakerCount;
+    // Number of stakers staked on a child node. This includes real stakers and zombies
+    uint64 childStakerCount;
+    // This value starts at zero and is set to a value when the first child is created. After that it is constant until the node is destroyed or the owner destroys pending nodes
+    uint64 firstChildBlock;
+    // The number of the latest child of this node to be created
+    uint64 latestChildNumber;
+    // The block number when this node was created
+    uint64 createdAtBlock;
+    // A hash of all the data needed to determine this node's validity, to protect against reorgs
+    bytes32 nodeHash;
+}
+
+interface IRollup {
+    function getNode(uint64 _nodeIndex)
+        external
+        view
+        returns (Node memory);
+}
+
+contract ArbitrumResolverStub{
     string[] public gateways;
+    address public rollup;
     address public l2resolver;
 
     error OffchainLookup(
@@ -35,11 +72,12 @@ contract OptimismResolverStub is Lib_AddressResolver {
     );
 
     constructor(
-        address ovmAddressManager,
         string[] memory _gateways,
+        address _rollup,
         address _l2resolver
-    ) Lib_AddressResolver(ovmAddressManager) {
+    ) {
         gateways = _gateways;
+        rollup = _rollup;
         l2resolver = _l2resolver;
     }
 
@@ -48,7 +86,7 @@ contract OptimismResolverStub is Lib_AddressResolver {
     }
 
     function addr(bytes32 node) public view returns (address) {
-        return _addr(node, OptimismResolverStub.addrWithProof.selector);
+        return _addr(node, ArbitrumResolverStub.addrWithProof.selector);
     }
 
     function addr(bytes32 node, uint256 coinType)
@@ -61,7 +99,7 @@ contract OptimismResolverStub is Lib_AddressResolver {
                 addressToBytes(
                     _addr(
                         node,
-                        OptimismResolverStub.bytesAddrWithProof.selector
+                        ArbitrumResolverStub.bytesAddrWithProof.selector
                     )
                 );
         } else {
@@ -109,40 +147,38 @@ contract OptimismResolverStub is Lib_AddressResolver {
     {
         L2StateProof memory proof = abi.decode(response, (L2StateProof));
         bytes32 node = abi.decode(extraData, (bytes32));
-        require(verifyStateRootProof(proof), "Invalid state root");
+        // step 1: check confirmData
+        bytes32 confirmdata = keccak256(abi.encodePacked(proof.blockHash, proof.sendRoot));
+        Node memory rblock = IRollup(rollup).getNode(proof.nodeIndex);
+        require(rblock.confirmData == confirmdata, "confirmData mismatch");
+        // step 2: check blockHash against encoded block array
+        require(proof.blockHash == keccak256(proof.encodedBlockArray), "blockHash encodedBlockArray mismatch");
+        // step 3: check storage value from derived value
         bytes32 slot = keccak256(abi.encodePacked(node, uint256(1)));
-        bytes32 value = getStorageValue(l2resolver, slot, proof);
-        return address(uint160(uint256(value)));
-    }
-
-    function verifyStateRootProof(L2StateProof memory proof)
-        internal
-        view
-        returns (bool)
-    {
-        StateCommitmentChain ovmStateCommitmentChain = StateCommitmentChain(
-            resolve("StateCommitmentChain")
+        bytes32 value = getStorageValue(
+            l2resolver,
+            slot,
+            proof.stateRoot,
+            proof.stateTrieWitness,
+            proof.storageTrieWitness
         );
-        return
-            ovmStateCommitmentChain.verifyStateCommitment(
-                proof.stateRoot,
-                proof.stateRootBatchHeader,
-                proof.stateRootProof
-            );
+        return address(uint160(uint256(value)));
     }
 
     function getStorageValue(
         address target,
         bytes32 slot,
-        L2StateProof memory proof
+        bytes32 stateRoot,
+        bytes memory stateTrieWitness,
+        bytes memory storageTrieWitness
     ) internal view returns (bytes32) {
         (
             bool exists,
             bytes memory encodedResolverAccount
         ) = Lib_SecureMerkleTrie.get(
                 abi.encodePacked(target),
-                proof.stateTrieWitness,
-                proof.stateRoot
+                stateTrieWitness,
+                stateRoot
             );
         require(exists, "Account does not exist");
         Lib_OVMCodec.EVMAccount memory account = Lib_OVMCodec.decodeEVMAccount(
@@ -151,7 +187,7 @@ contract OptimismResolverStub is Lib_AddressResolver {
         (bool storageExists, bytes memory retrievedValue) = Lib_SecureMerkleTrie
             .get(
                 abi.encodePacked(slot),
-                proof.storageTrieWitness,
+                storageTrieWitness,
                 account.storageRoot
             );
         require(storageExists, "Storage value does not exist");

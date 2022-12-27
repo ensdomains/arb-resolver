@@ -16,18 +16,9 @@ const { toHexString } = require('./helpers/utils');
 
 const RESOLVER_ADDR = "0x0123456789012345678901234567890123456789";
 const GATEWAYS = ["http://localhost:8080/query/" + RESOLVER_ADDR];
+const EMPTY_BYTES32 = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
-const setProxyTarget = async (AddressManager, name, target) => {
-  const SimpleProxy = await (
-    await ethers.getContractFactory('Helper_SimpleProxy')
-  ).deploy()
-  await SimpleProxy.setTarget(target.address)
-  await AddressManager.setAddress(name, SimpleProxy.address)
-}
 
-const makeAddressManager = async () => {
-  return (await ethers.getContractFactory('Lib_AddressManager')).deploy()
-}
 const proofInterface = new Interface(IResolverAbi)
 describe("ArbitrumResolverStub", function() {
   let signer;
@@ -36,27 +27,9 @@ describe("ArbitrumResolverStub", function() {
     [signer, account2] = await ethers.getSigners()
   });
 
-  let addressManager
+  let mock__Rollup
   before(async () => {
-    addressManager = await makeAddressManager()
-  });
-
-  let mock__CanonicalTransactionChain;
-  let mock__StateCommitmentChain;
-  before(async () => {
-    mock__CanonicalTransactionChain = await smock.fake('CanonicalTransactionChain');
-    mock__StateCommitmentChain = await smock.fake('StateCommitmentChain');
-
-    await setProxyTarget(
-      addressManager,
-      'CanonicalTransactionChain',
-      mock__CanonicalTransactionChain
-    );
-    await setProxyTarget(
-      addressManager,
-      'StateCommitmentChain',
-      mock__StateCommitmentChain
-    );
+    mock__Rollup = await smock.fake('IRollup');
   });
 
   let Factory__ArbitrumResolverStub;
@@ -68,7 +41,7 @@ describe("ArbitrumResolverStub", function() {
 
   let stub, callbackFunction;
   beforeEach(async () => {
-    stub = await Factory__ArbitrumResolverStub.deploy(addressManager.address, GATEWAYS, RESOLVER_ADDR);
+    stub = await Factory__ArbitrumResolverStub.deploy(GATEWAYS, mock__Rollup.address ,RESOLVER_ADDR);
     callbackFunction = stub.interface.getSighash('addrWithProof(bytes, bytes)')
     callData = stub.interface.encodeFunctionData("addr(bytes32)", [testNode])
     await stub.deployed();
@@ -126,11 +99,13 @@ describe("ArbitrumResolverStub", function() {
       });
 
       proof = {
-        stateRoot: toHexString(generator._trie.root),
-        stateRootBatchHeader: DUMMY_BATCH_HEADERS[0],
-        stateRootProof: DUMMY_BATCH_PROOFS[0],
+        nodeIndex:1,
+        blockHash:'0x9d614b48ae08399467ab7ff7189410a4f78851b2300d0622b598d64d768c8f2f',
+        sendRoot:'0x0000000000000000000000000000000000000000000000000000000000000000',
+        encodedBlockArray:'0xf90220a060aa8f2df698cb2fd068f647db94ed21f07d97f1e2c401ac2f6b096c42505130a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794a4b000000000000000000073657175656e636572a05c50809328383f5a603c57ada9b61a95607cee6a7defe81f147a9d50b640b78ba00ea2433a5e968a249aeea102dfde8586b5d4363e4da9633dcb583bb4f414709da0331effa7f2ca1520510a268b07243aebbefd93a62eecde96dbbd4b218bbd8fd8b9010004000000000000000000000000000000040000000000000000000000000100000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000010000000000000000008000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000015a8704000000000000831475af8463a590d0a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000001f4b1000000000000000800000000000000008800000000000000198405f5e100',
         stateTrieWitness: (await generator.makeAccountProofTest(RESOLVER_ADDR))
           .accountTrieWitness,
+        stateRoot: toHexString(generator._trie.root),
         storageTrieWitness: (
           await storageGenerator.makeInclusionProofTest(storageKey)
         ).proof,
@@ -138,7 +113,20 @@ describe("ArbitrumResolverStub", function() {
     })
 
     beforeEach(async () => {
-      mock__StateCommitmentChain.verifyStateCommitment.returns(true)
+      mock__Rollup.getNode.returns({
+        stateHash: EMPTY_BYTES32,
+        challengeHash: EMPTY_BYTES32,
+        confirmData:'0xbe797a9a13133efbded100f2897c27599e34d464cbf6bb7a28a7a8a5872f7eb8',
+        prevNum: 0,
+        deadlineBlock: 0,
+        noChildConfirmedBeforeBlock: 0,
+        stakerCount: 0,
+        childStakerCount: 0,
+        firstChildBlock: 0,
+        latestChildNumber: 0,
+        createdAtBlock: 0,
+        nodeHash: EMPTY_BYTES32
+      })
     })
 
     it("should verify proofs of resolution results", async function() {
