@@ -1784,7 +1784,9 @@ const verifier = new ethers.Contract(verifierAddress, verifierAbi, l1provider);
 async function main(){
   const slot = '0x0000000000000000000000000000000000000000000000000000000000000000'
   console.log(await l1provider.getBlock('latest'))
+  console.log('l1 eth_chainId', parseInt(await l1provider.send('eth_chainId', [])))
   console.log(await l2provider.getBlock('latest'))
+  console.log('l2 eth_chainId', parseInt(await l2provider.send('eth_chainId', [])))
   const nodeIndex = await rollup.latestNodeCreated()
   console.log(3, nodeIndex)
   const nodeEventFilter = await rollup.filters.NodeCreated(nodeIndex);

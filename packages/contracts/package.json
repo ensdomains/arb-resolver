@@ -1,5 +1,5 @@
 {
-  "name": "@ensdomains/op-resolver-contracts",
+  "name": "makoto-arb-resolver-contracts",
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
@@ -8,7 +8,7 @@
     "prepublishOnly": "yarn build",
     "build": "npx hardhat compile"
   },
-  "author": "",
+  "author": "Makoto Inoue",
   "license": "ISC",
   "devDependencies": {
     "@nomicfoundation/hardhat-network-helpers": "^1.0.6",
