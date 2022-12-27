@@ -32,7 +32,7 @@ struct Node {
     bytes32 nodeHash;
 }
 
-interface IRollup {
+interface Rollup {
     function getNode(uint64 _nodeIndex)
         external
         view
@@ -40,11 +40,11 @@ interface IRollup {
 }
 
 contract Verifier {
-    IRollup rollup;
+    Rollup rollup;
     address public target;
 
     function setRollup (address rollupAddress) public{
-        rollup = IRollup(rollupAddress);
+        rollup = Rollup(rollupAddress);
     }
     function setTarget (address targetAddress) public{
         target = targetAddress;
