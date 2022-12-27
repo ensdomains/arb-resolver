@@ -21,22 +21,12 @@ async function main() {
   await verifier.setTarget(contractAddress);
   console.log(`Verifier deployed at ${verifier.address}`);
 
-  throw('end');
-
-  console.log(1, hre.network, CONSTANTS.OVM_ADDRESS_MANAGERS)
-  let OVM_ADDRESS_MANAGER
-  if(hre.network.name == 'localhost'){
-    const metadata = await (await fetch('http://localhost:8080/addresses.json')).json()
-    console.log(metadata)    
-    OVM_ADDRESS_MANAGER = metadata.AddressManager
-  }else{
-    OVM_ADDRESS_MANAGER = CONSTANTS.OVM_ADDRESS_MANAGERS[hre.network.name]
-  }
   if(process.env.RESOLVER_ADDRESS){
     RESOLVER_ADDRESS = process.env.RESOLVER_ADDRESS
   }else{
     throw('Set RESOLVER_ADDRESS=')
   }
+  console.log({RESOLVER_ADDRESS})
   /************************************
    * L1 deploy
    ************************************/
@@ -45,8 +35,8 @@ async function main() {
   // Deploy the resolver stub
   console.log(2)
   const ArbitrumResolverStub = await ethers.getContractFactory("ArbitrumResolverStub");
-  console.log(3, OVM_ADDRESS_MANAGER, [hre.network.config.gatewayurl], RESOLVER_ADDRESS)
-  const stub = await ArbitrumResolverStub.deploy(OVM_ADDRESS_MANAGER, [hre.network.config.gatewayurl], RESOLVER_ADDRESS);
+  console.log(3, [hre.network.config.gatewayurl], rollupAddress, RESOLVER_ADDRESS)
+  const stub = await ArbitrumResolverStub.deploy([hre.network.config.gatewayurl], rollupAddress, RESOLVER_ADDRESS);
   console.log(4)
   await stub.deployed();
   console.log(`ArbitrumResolverStub deployed at ${stub.address}`);
