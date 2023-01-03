@@ -2,24 +2,17 @@ const hre = require("hardhat");
 const {ethers } = hre;
 const namehash = require('eth-ens-namehash');
 const abi = require('../artifacts/@ensdomains/ens-contracts/contracts/registry/ENSRegistry.sol/ENSRegistry.json').abi
-const CONSTANTS = require('./constants')
+const ROLLUP_ADDRESSES = require('./constants').ROLLUP_ADDRESSES
 require('isomorphic-fetch');
 
 let RESOLVER_ADDRESS
 async function main() {
-  const rollupAddress = '0x7456c45bfd495b7bcf424c0a7993a324035f682f';
-  const contractAddress = '0x6c25aA969CaDCCA2cA6ad022bD67cCe5Fc27024B';
+  console.log(hre.network.name)
+  const rollupAddress = ROLLUP_ADDRESSES[hre.network.name]
   const AssertionHelper = await ethers.getContractFactory("AssertionHelper");
   const assertionHelper = await AssertionHelper.deploy();
   await assertionHelper.deployed();
   console.log(`assertionHelper deployed at ${assertionHelper.address}`);
-
-  const Verifier = await ethers.getContractFactory("Verifier");
-  const verifier = await Verifier.deploy();
-  await verifier.deployed();
-  await verifier.setRollup(rollupAddress);
-  await verifier.setTarget(contractAddress);
-  console.log(`Verifier deployed at ${verifier.address}`);
 
   if(process.env.RESOLVER_ADDRESS){
     RESOLVER_ADDRESS = process.env.RESOLVER_ADDRESS

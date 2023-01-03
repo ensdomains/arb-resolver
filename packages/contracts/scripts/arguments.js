@@ -1,4 +1,4 @@
-const CONSTANTS = require('./constants')
+const ROLLUP_ADDRESSES = require('./constants').ROLLUP_ADDRESSES
 const hre = require("hardhat");
 let RESOLVER_ADDRESS
 if(process.env.RESOLVER_ADDRESS){
@@ -7,7 +7,7 @@ if(process.env.RESOLVER_ADDRESS){
   throw('Set RESOLVER_ADDRESS=')
 }
 module.exports = [
-  CONSTANTS.OVM_ADDRESS_MANAGERS[hre.network.name],
   [ hre.network.config.gatewayurl ],
+  ROLLUP_ADDRESSES[hre.network.name],
   RESOLVER_ADDRESS
 ]

@@ -6,8 +6,6 @@ const IResolverAbi = require('@ensdomains/arb-resolver-contracts/artifacts/contr
 const helperAbi = require('@ensdomains/arb-resolver-contracts/artifacts/contracts/l1/AssertionHelper.sol/AssertionHelper.json').abi
 
 const rollupAbi = require('../src/rollup.json')
-const rollupAddress = '0x7456c45bfd495b7bcf424c0a7993a324035f682f'
-const helperAddress = '0x4DF2B95A100F5aE14C1d86364F2f554144169215'
 console.log('inputs', IResolverAbi[0].inputs)
 console.log('outputs', JSON.stringify(IResolverAbi, null, 2))
 // const namehash = require('eth-ens-namehash');
@@ -19,18 +17,19 @@ program
   .option('-l1c --l1_chain_id <chain1>', 'L1_CHAIN_ID', '1337')
   .option('-l2c --l2_chain_id <chain2>', 'L2_CHAIN_ID', '412346')
   .option('-r --l2_resolver_address <address>', 'L2_PROVIDER_URL')
+  .option('-ru --rollup_address <rollup_address>', 'ROLLUP_ADDRESS', '0x7456c45bfd495b7bcf424c0a7993a324035f682f')
+  .option('-h --helper_address <helper_address>', 'HELPER_ADDRESS', '0x4DF2B95A100F5aE14C1d86364F2f554144169215')  
   .option('-d --debug', 'debug', false)
   .option('-v --verification_option <value>', 'VERIFICATION_OPTION', 'fewhoursold')
   .option('-p --port <number>', 'Port number to serve on', '8081');
 program.parse(process.argv);
 const options = program.opts();
 console.log({options})
-const {l1_provider_url , l2_provider_url , l2_resolver_address, l1_chain_id, l2_chain_id, debug, verification_option } = options
+const {l1_provider_url , l2_provider_url , rollup_address, helper_address, l2_resolver_address, l1_chain_id, l2_chain_id, debug, verification_option } = options
 const l1provider = new ethers.providers.JsonRpcProvider(l1_provider_url);
 const l2provider = new ethers.providers.JsonRpcProvider(l2_provider_url);
-const rollup = new ethers.Contract(rollupAddress, rollupAbi, l1provider);
-const helper = new ethers.Contract(helperAddress, helperAbi, l1provider);
-console.log({rollup, helper})
+const rollup = new ethers.Contract(rollup_address, rollupAbi, l1provider);
+const helper = new ethers.Contract(helper_address, helperAbi, l1provider);
 const server = new Server();
 let storageOption:any
 switch (verification_option) {
@@ -67,8 +66,6 @@ server.add(IResolverAbi, [
         })
       }
 
-      const rollup = new ethers.Contract(rollupAddress, rollupAbi, l1provider);
-      const helper = new ethers.Contract(helperAddress, helperAbi, l1provider);
       const nodeIndex = await rollup.latestNodeCreated()
       const nodeEventFilter = await rollup.filters.NodeCreated(nodeIndex);
       const nodeEvents = await rollup.queryFilter(nodeEventFilter);

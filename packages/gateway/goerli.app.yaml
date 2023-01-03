@@ -1,0 +1,13 @@
+runtime: nodejs14
+entrypoint: 'node dist/index.js --l1_provider_url $L1_PROVIDER_URL --rollup_address $ROLLUP_ADDRESS --helper_address $HELPER_ADDRESS --port $PORT --l2_provider_url $L2_PROVIDER_URL --l2_resolver_address $L2_RESOLVER_ADDRESS --l1_chain_id $L1_CHAIN_ID --l2_chain_id $L2_CHAIN_ID --debug'
+
+
+env_variables:
+  PORT: 8080
+  L2_RESOLVER_ADDRESS: '0xE2ea775DfEb454F7E667e71029b401b6C08fF000'
+  ROLLUP_ADDRESS: '0x45e5cAea8768F42B385A366D3551Ad1e0cbFAb17'
+  HELPER_ADDRESS: '0x55219815ddB92B4DD1c249d243559A4d4Dd567C1'
+  L1_CHAIN_ID: 5
+  L2_CHAIN_ID: 421613
+includes:
+  - secret.yaml

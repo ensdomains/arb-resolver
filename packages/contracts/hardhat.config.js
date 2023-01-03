@@ -21,19 +21,22 @@ module.exports = {
       chainId: 412346,
       accounts: [LOCAL_PRIVATE_KEY ]
     },
-    // goerli: {
-    //   url: process.env.L1_PROVIDER_URL || 'http://localhost:9545',
-    //   accounts: [process.env.PRIVATE_KEY || '' ],
-    //   chainId: 5,
-    //   gatewayurl:'https://arb-resolver-example.uc.r.appspot.com/{sender}/{data}.json',
-    // },
-    // optimismGoerli: {
-    //   url: process.env.L2_PROVIDER_URL || 'http://localhost:8545',
-    //   accounts: [process.env.PRIVATE_KEY || '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80']
-    // }
+    goerli: {
+      url: process.env.L1_PROVIDER_URL || 'http://localhost:9545',
+      accounts: [process.env.PRIVATE_KEY || '' ],
+      chainId: 5,
+      gatewayurl:'https://arb-resolver-example.uc.r.appspot.com/{sender}/{data}.json',
+    },
+    arbitrumGoerli: {
+      url: process.env.L2_PROVIDER_URL || 'http://localhost:8545',
+      accounts: [process.env.PRIVATE_KEY || '']
+    }
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY
+    apiKey: {
+      goerli: process.env.ETHERSCAN_API_KEY,
+      arbitrumGoerli: process.env.ARBISCAN_API_KEY,
+    }
   },
   namedAccounts: {
     deployer: {
