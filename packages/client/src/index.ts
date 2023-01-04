@@ -21,7 +21,7 @@ const options = program.opts();
 const ensAddress = options.registry;
 const chainId = parseInt(options.chainId);
 const { chainName, l1_provider_url, debug } = options
-console.log(1, {l1_provider_url, ensAddress, chainId, chainName, debug})
+console.log('options', {l1_provider_url, ensAddress, chainId, chainName, debug})
 let provider
 if(chainId && chainName){
   provider = new ethers.providers.JsonRpcProvider(l1_provider_url, {
@@ -34,17 +34,12 @@ if(chainId && chainName){
   provider = new ethers.providers.JsonRpcProvider(options.l1_provider_url);
 }
 // provider.on("debug", console.log)
-console.log(2);
 const l2provider = new ethers.providers.JsonRpcProvider(options.l2_provider_url);
-console.log(3);
 (async () => {
   const l1ChainId = parseInt(await provider.send('eth_chainId', []))
   const l2ChainId = parseInt(await l2provider.send('eth_chainId', []))
   const name = program.args[0];
   const node = namehash.hash(name)
-  console.log({ l1ChainId, l2ChainId, name, node })
-  console.log(9, { name, node, provider })
-  console.log(91, await provider.getBlock('latest'))
   let r = await provider.getResolver(name);
   if(r){
     const resolver = new ethers.Contract(r.address, StubAbi, provider);

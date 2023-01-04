@@ -6,19 +6,16 @@ const IResolverAbi = require('@ensdomains/arb-resolver-contracts/artifacts/contr
 const helperAbi = require('@ensdomains/arb-resolver-contracts/artifacts/contracts/l1/AssertionHelper.sol/AssertionHelper.json').abi
 
 const rollupAbi = require('../src/rollup.json')
-console.log('inputs', IResolverAbi[0].inputs)
-console.log('outputs', JSON.stringify(IResolverAbi, null, 2))
-// const namehash = require('eth-ens-namehash');
 const {BigNumber} = ethers
 const program = new Command();
 program
+  .option('-r --l2_resolver_address <address>', 'RESOLVER_ADDRESS')
+  .option('-h --helper_address <helper_address>', 'HELPER_ADDRESS')
   .option('-l1p --l1_provider_url <url1>', 'L1_PROVIDER_URL', 'http://localhost:8545')
   .option('-l2p --l2_provider_url <url2>', 'L2_PROVIDER_URL', 'http://localhost:8547')
   .option('-l1c --l1_chain_id <chain1>', 'L1_CHAIN_ID', '1337')
   .option('-l2c --l2_chain_id <chain2>', 'L2_CHAIN_ID', '412346')
-  .option('-r --l2_resolver_address <address>', 'L2_PROVIDER_URL')
   .option('-ru --rollup_address <rollup_address>', 'ROLLUP_ADDRESS', '0x7456c45bfd495b7bcf424c0a7993a324035f682f')
-  .option('-h --helper_address <helper_address>', 'HELPER_ADDRESS', '0x4DF2B95A100F5aE14C1d86364F2f554144169215')  
   .option('-d --debug', 'debug', false)
   .option('-v --verification_option <value>', 'VERIFICATION_OPTION', 'fewhoursold')
   .option('-p --port <number>', 'Port number to serve on', '8081');
@@ -26,6 +23,10 @@ program.parse(process.argv);
 const options = program.opts();
 console.log({options})
 const {l1_provider_url , l2_provider_url , rollup_address, helper_address, l2_resolver_address, l1_chain_id, l2_chain_id, debug, verification_option } = options
+if(helper_address === undefined || l2_resolver_address === undefined){
+  throw('Must specify --l2_resolver_address and --helper_address')
+}
+
 const l1provider = new ethers.providers.JsonRpcProvider(l1_provider_url);
 const l2provider = new ethers.providers.JsonRpcProvider(l2_provider_url);
 const rollup = new ethers.Contract(rollup_address, rollupAbi, l1provider);
@@ -76,7 +77,7 @@ server.add(IResolverAbi, [
         blockHash,
         false
       ]);
-      console.log(l2blockRaw)
+      console.log(5, {l2blockRaw})
       const stateRoot = l2blockRaw.stateRoot
       const blockarray = [ 
         l2blockRaw.parentHash, 
@@ -103,7 +104,7 @@ server.add(IResolverAbi, [
         [slot],
         {blockHash}
       ]);
-      console.log(proof)
+      console.log(6, JSON.stringify(proof, null, 2))
       const accountProof = ethers.utils.RLP.encode(proof.accountProof)    
       const storageProof = ethers.utils.RLP.encode((proof.storageProof as any[]).filter((x)=>x.key===slot)[0].proof)
       const finalProof = {
@@ -115,9 +116,7 @@ server.add(IResolverAbi, [
         stateRoot,
         storageTrieWitness: storageProof,
       };
-
-
-      console.log(5, {finalProof})
+      console.log(7, {finalProof})
       return [finalProof]
     }
   }

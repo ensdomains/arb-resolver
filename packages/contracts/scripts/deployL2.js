@@ -5,7 +5,6 @@ let TEST_NAME
 if(process.env.TEST_NAME){
   TEST_NAME = process.env.TEST_NAME
 }else{
-  console.log(hre.network.name)
   if(hre.network.name === 'arbitrumLocalhost'){
     TEST_NAME = 'test.test'
   } else {
@@ -24,14 +23,10 @@ async function main() {
 
   const resolver = await ArbitrumResolver.deploy();
   await resolver.deployed();
-  console.log(`ArbitrumResolver deployed to ${resolver.address}`);
-  console.log({l2accounts})
+  console.log(`Arbitrum l2 Resolver deployed to `, resolver.address);
   await (await resolver.functions.setAddr(TEST_NODE, l2accounts[0].address)).wait();
-  console.log({
-    TEST_NAME,
-    TEST_NODE
-  })
-  console.log('Address set to', await resolver['addr(bytes32)'](TEST_NODE));
+  console.log(`${TEST_NAME} ETH address is set to`, await resolver['addr(bytes32)'](TEST_NODE));
+  console.log(`Set $L2_RESOLVER_ADDRESS to ${resolver.address}`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

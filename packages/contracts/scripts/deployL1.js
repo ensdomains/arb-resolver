@@ -19,18 +19,14 @@ async function main() {
   }else{
     throw('Set RESOLVER_ADDRESS=')
   }
-  console.log({RESOLVER_ADDRESS})
   /************************************
    * L1 deploy
    ************************************/
   const accounts = await ethers.getSigners();
 
   // Deploy the resolver stub
-  console.log(2)
   const ArbitrumResolverStub = await ethers.getContractFactory("ArbitrumResolverStub");
-  console.log(3, [hre.network.config.gatewayurl], rollupAddress, RESOLVER_ADDRESS)
   const stub = await ArbitrumResolverStub.deploy([hre.network.config.gatewayurl], rollupAddress, RESOLVER_ADDRESS);
-  console.log(4)
   await stub.deployed();
   console.log(`ArbitrumResolverStub deployed at ${stub.address}`);
 
@@ -45,22 +41,12 @@ async function main() {
     let tx = await ens.setSubnodeOwner('0x' + '00'.repeat(32), ethers.utils.keccak256(ethers.utils.toUtf8Bytes('test')), accounts[0].address);
     let rcpt = await tx.wait()
     tx = await ens.setSubnodeOwner(namehash.hash('test'), ethers.utils.keccak256(ethers.utils.toUtf8Bytes('test')), accounts[0].address);
-    rcpt = await tx.wait()  
-    console.log(18)
+    rcpt = await tx.wait()
     // Set the stub as the resolver for test.test
     tx = await ens.setResolver(namehash.hash('test.test'), stub.address);
     rcpt = await tx.wait()
-    console.log(19, ens.address)
-    console.log(await ens.owner(namehash.hash('test.test')))
-    console.log(await ens.resolver(namehash.hash('test.test')))  
-    console.log(hre.network.config, ens.address)
-    provider = new ethers.providers.JsonRpcProvider(hre.network.config.url, {
-      chainId: hre.network.config.chainId,
-      name: 'unknown',
-      ensAddress:ens.address
-    });  
-    const ens2 = new ethers.Contract(ens.address, abi, provider);
-    console.log(await ens2.resolver(namehash.hash('test.test')))  
+    console.log(`Set $ENS_REGISTRY_ADDRESS to ${ens.address}`)
+    console.log(`Set $HELPER_ADDRESS to ${assertionHelper.address}`)
   }
 }
 
