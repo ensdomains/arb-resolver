@@ -17,7 +17,8 @@ program
   .option('-l2c --l2_chain_id <chain2>', 'L2_CHAIN_ID', '412346')
   .option('-ru --rollup_address <rollup_address>', 'ROLLUP_ADDRESS', '0x7456c45bfd495b7bcf424c0a7993a324035f682f')
   .option('-d --debug', 'debug', false)
-  .option('-v --verification_option <value>', 'VERIFICATION_OPTION', 'fewhoursold')
+  // 
+  .option('-v --verification_option <value>', 'latest|finalized|number_of_blocks', 'latest')
   .option('-p --port <number>', 'Port number to serve on', '8081');
 program.parse(process.argv);
 const options = program.opts();
@@ -32,20 +33,6 @@ const l2provider = new ethers.providers.JsonRpcProvider(l2_provider_url);
 const rollup = new ethers.Contract(rollup_address, rollupAbi, l1provider);
 const helper = new ethers.Contract(helper_address, helperAbi, l1provider);
 const server = new Server();
-let storageOption:any
-switch (verification_option) {
-  case 'latest':
-  case 'finalized':
-    storageOption = {
-      blockTag:verification_option
-    }
-    break;
-  default:
-    storageOption = {
-      l1BlocksAgo: 2000
-    }
-}
-if(debug) console.log({storageOption})
 
 server.add(IResolverAbi, [
   {
@@ -66,8 +53,18 @@ server.add(IResolverAbi, [
           addressData
         })
       }
-
-      const nodeIndex = await rollup.latestNodeCreated()
+      let nodeIndex, ago
+      if(verification_option === 'latest'){
+        nodeIndex = await rollup.latestNodeCreated()
+      }else {
+        if(verification_option === 'finalized'){
+          ago = 0
+        }else{
+          ago = parseInt(verification_option)
+        }
+        nodeIndex = (await rollup.latestConfirmed()).sub(ago)
+      }
+      console.log({verification_option, nodeIndex:nodeIndex.toString(), ago})
       const nodeEventFilter = await rollup.filters.NodeCreated(nodeIndex);
       const nodeEvents = await rollup.queryFilter(nodeEventFilter);
       const assertion = nodeEvents[0].args!.assertion
