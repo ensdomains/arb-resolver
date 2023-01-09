@@ -146,6 +146,7 @@ contract ArbitrumResolverStub{
         L2StateProof memory proof = abi.decode(response, (L2StateProof));
         bytes32 node = abi.decode(extraData, (bytes32));
         // step 1: check confirmData
+        // confirmData is how Arbitrum stores the l2 state in rblock
         bytes32 confirmdata = keccak256(abi.encodePacked(proof.blockHash, proof.sendRoot));
         Node memory rblock = IRollup(rollup).getNode(proof.nodeIndex);
         require(rblock.confirmData == confirmdata, "confirmData mismatch");
